@@ -2,6 +2,7 @@ require 'rubygems'
 require 'isbn/tools'
 require 'sinatra'
 require 'rdf_objects/pho'
+require 'json'
 require 'rack/conneg'
 require 'cgi'
 
