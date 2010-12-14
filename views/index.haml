@@ -1,0 +1,22 @@
+!!!
+%html
+  %head
+    %title Open Library X-Identifier Service
+  %body
+    %h2 Open Library X-Identifier Service
+    .content
+      .intro This web service operates like OCLC's X-Identifier or LibraryThing's ThingISBN services, although it returns an RDF Graph representation from the data in the Open Library.  Lookups can be done by ISBN (10 or 13), OCLC number, LCCN, Open Library edition ID or Open Library Work ID.  It will return the FRBR Work set grouping for the requested resource.  Responses can be provided in RDF/XML, RDF/JSON, NTriples or XML (RDF/XML sent with an "application/xml" content-type).
+      .examples
+        %ul
+          %li
+            %a{:href=>"/isbn/006251587X"} "Weaving the Web" (ISBN: 006251587X)
+          %li
+            %a{:href=>"/oclc/792033"} "Ideas and Integrities" (oclcnum: 792033)
+          %li
+            %a{:href=>"/lccn/00004240"} "A Week on the Concord and Merrimack Rivers" (LCCN: 00004240)
+          %li
+            %a{:href=>"/books/OL7335875M"} "The Changing Family; Its Function and Future" (OL: OL7335875M)
+          %li
+            %a{:href=>"/works/OL10000374W"} "Fortuny" (OL: OL10000374W)
+
+      .epilogue This service is provided by the Talis Platform and Heroku using data provided by the Open Library

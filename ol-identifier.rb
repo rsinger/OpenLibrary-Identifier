@@ -2,7 +2,7 @@ require 'rubygems'
 require 'isbn/tools'
 require 'sinatra'
 require 'rdf_objects/pho'
-require 'json'
+require 'haml'
 require 'rack/conneg'
 require 'cgi'
 
@@ -21,7 +21,14 @@ configure do
 end
 
 before do  
-  content_type negotiated_type
+  if negotiated?
+    content_type negotiated_type
+  end
+end
+
+get '/' do
+  response['Content-Type'] = "text/html"
+  haml :index
 end
 
 get '/:identifier_type/:identifier' do
