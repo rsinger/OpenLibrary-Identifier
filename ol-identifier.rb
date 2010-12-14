@@ -76,27 +76,6 @@ get '/:identifier_type/:identifier' do
   end
 end
 
-
-get '/authors/:identifier' do
-  graph = RDF::Graph.new
-  auth = RDF::URI.new("http://dilettantes.code4lib.org/open-library/authors/#{params[:identifier]}")
-  stmt = [auth, RDF::OWL.sameAs, RDF::URI.new("http://openlibrary.org/authors/#{params[:identifier]}")]
-  data = open("http://api.talis.com/stores/openlibrary/meta?about=#{CGI.escape("http://openlibrary.org/authors/#{params[:identifier]}")}&output=ntriples").read
-  RDF::NTriples::Reader.new(data) do |reader|
-    reader.each_statement do |statement|
-      graph << statement
-    end
-    graph
-  end
-  graph << stmt
-  respond_to do | wants |
-    wants.rdf {  to_rdfxml(graph) }
-    wants.json { to_json(graph) }
-    wants.nt { to_ntriples(graph) }
-  end  
-end
-
-
 helpers do
   
   def normalize_lccn(lccn)
