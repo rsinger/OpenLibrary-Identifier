@@ -1,6 +1,6 @@
 sinatra
-rdf_objects
+rdfobjects
 pho
-rdf_objects-pho
+rdfobjects-pho
 isbn-tools
 rack-conneg
