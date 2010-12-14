@@ -2,6 +2,7 @@ sinatra
 rdfobjects
 pho
 rdfobjects-pho
+rdf-json
 isbn-tools
 rack-conneg
 json
