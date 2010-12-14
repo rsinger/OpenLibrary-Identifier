@@ -3,6 +3,7 @@ rdfobjects
 pho
 rdfobjects-pho
 rdf-json
+rdf-raptor
 isbn-tools
 rack-conneg
 json
