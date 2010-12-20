@@ -48,7 +48,7 @@ get '/:identifier_type/:identifier' do
   when "works"
     build_work_query("http://openlibrary.org/#{params[:identifier_type]}/#{params[:identifier]}")
   end
-  response = options.store.sparql_describe(query, "application/json")
+  response = options.store.sparql_describe(query, "text/plain")
   unless response.code == 200
     halt response.code, {'Content-Type' => 'text/plain'}, response.body
   end  
