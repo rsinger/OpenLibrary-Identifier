@@ -59,7 +59,11 @@ get '/:identifier_type/:identifier' do
       collection[r.uri] = r
     end
   else
-    halt 500, {"Content-Type" => 'text/plain'}, response.body.content
+    if response.code == 200
+      halt 404, {"Content-Type" => 'text/plain'}, "Resource not found"
+    else
+      halt 500, {"Content-Type" => 'text/plain'}, response.body.content
+    end
   end
   resource = RDFObject::Resource.new(base_url+"/#{params[:identifier_type]}/#{params[:identifier]}")
   matches = case params[:identifier_type]
