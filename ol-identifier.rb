@@ -1,7 +1,10 @@
 require 'rubygems'
 require 'isbn/tools'
 require 'sinatra'
-require 'rdf_objects/pho'
+require 'sasquatch'
+require 'rdf/json'
+require 'rdf/ntriples'
+require 'rdf/rdfxml'
 require 'haml'
 require 'rack/conneg'
 require 'cgi'
@@ -9,15 +12,18 @@ require 'cgi'
 use(Rack::Conneg) { |conneg|
   Rack::Mime::MIME_TYPES['.nt'] = 'text/plain'   
   conneg.set :accept_all_extensions, false
-  conneg.set :fallback, :rdf
+  conneg.set :fallback, :json
   conneg.ignore('/public/')
   conneg.ignore('/stylesheets/')
   conneg.provide([:rdf, :nt, :xml, :json])
 }
 
+module RDF
+  class BIBO < RDF::Vocabulary("http://purl.org/ontology/bibo/");end
+end
+
 configure do
-  set :store, RDFObject::Store.new('http://api.talis.com/stores/openlibrary')
-  Curie.add_prefixes! :bibo=>"http://purl.org/ontology/bibo/", :owl=>"http://www.w3.org/2002/07/owl#"
+  set :store, Sasquatch::Store.new('openlibrary')
 end
 
 before do  
@@ -48,43 +54,38 @@ get '/:identifier_type/:identifier' do
   when "works"
     build_work_query("http://openlibrary.org/#{params[:identifier_type]}/#{params[:identifier]}")
   end
-  response = options.store.sparql_describe(query, "text/plain")
-  unless response.code == 200
-    halt response.code, {'Content-Type' => 'text/plain'}, response.body
+
+  response = options.store.sparql_describe(query)
+  unless options.store.last_response.code == 200
+    halt options.store.last_response.code, {'Content-Type' => 'text/plain'}, store.last_response.body
   end  
-  if response.collection
-    collection = RDFObject::Collection.new
-    response.collection.values.each do |r|
-      next if r.empty_graph?
-      collection[r.uri] = r
-    end
-  else
-    if response.code == 200
+  if response.empty?
+    if options.store.last_response.code == 200
       halt 404, {"Content-Type" => 'text/plain'}, "Resource not found"
     else
-      halt 500, {"Content-Type" => 'text/plain'}, response.body.content
+      halt 500, {"Content-Type" => 'text/plain'}, options.store.last_response.body.content
     end
   end
-  resource = RDFObject::Resource.new(base_url+"/#{params[:identifier_type]}/#{params[:identifier]}")
+  resource = RDF::URI.intern(base_url+"/#{params[:identifier_type]}/#{params[:identifier]}")
   matches = case params[:identifier_type]
   when "isbn"
-    response.collection.find_by_predicate_and_object("[bibo:isbn13]",normalize_isbn(params[:identifier])).keys
+    response.query(:predicate=>RDF::BIBO.isbn13, :object=>normalize_isbn(params[:identifier])).each_subject
   when "lccn"
-    response.collection.find_by_predicate_and_object("[bibo:lccn]",normalize_lccn(params[:identifier])).keys
+    response.query(:predicate=>RDF::BIBO.lccn, :object=>normalize_lccn(params[:identifier])).each_subject
   when "oclc"
-    response.collection.find_by_predicate_and_object("[bibo:oclcnum]", params[:identifier]).keys
+    response.query(:predicate=>RDF::BIBO.oclcnum, :object=>params[:identifier]).each_subject
   else
     ["http://openlibrary.org/#{params[:identifier_type]}/#{params[:identifier]}"]
   end
   matches.each do |match|
-    resource.relate("[owl:sameAs]",match)
+    response << [resource, RDF::OWL.sameAs, match]
   end
-  collection[resource.uri] = resource
+
   respond_to do | wants |
-    wants.rdf { collection.to_xml }
-    wants.json { collection.to_json }
-    wants.nt { collection.to_ntriples }
-    wants.xml { collection.to_xml }
+    wants.rdf { to_rdfxml(response) }
+    wants.json { response.to_json }
+    wants.nt { response.to_ntriples }
+    wants.xml { to_rdfxml(response) }
   end
 end
 
@@ -118,8 +119,12 @@ PREFIX dct: <http://purl.org/dc/terms/>
 DESCRIBE ?w ?m
 WHERE {
 {#{id_clauses.join("} UNION {")}} 
-?s dct:isVersionOf ?w.
-?w dct:hasVersion ?m .   
+OPTIONAL {
+  ?s dct:isVersionOf ?w.
+}
+OPTIONAL {
+  ?w dct:hasVersion ?m .   
+}
 }    
 END
    sparql
@@ -148,4 +153,12 @@ WHERE {
 END
   sparql    
   end  
+  
+  def to_rdfxml(data)
+    RDF::RDFXML::Writer.buffer do |writer|
+      data.each_statement do |statement|
+        writer << statement
+      end      
+    end
+  end
 end

@@ -1,9 +1,8 @@
 sinatra
-rdfobjects
-pho
-rdfobjects-pho
+rdf
+sasquatch
+rdf-rdfxml
 rdf-json
-rdf-raptor
 isbn-tools
 rack-conneg
 json
