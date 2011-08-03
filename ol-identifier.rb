@@ -116,14 +116,14 @@ helpers do
     sparql =<<END
 PREFIX bibo: <http://purl.org/ontology/bibo/>
 PREFIX dct: <http://purl.org/dc/terms/>
-DESCRIBE ?w ?m
+DESCRIBE ?w ?m ?s
 WHERE {
 {#{id_clauses.join("} UNION {")}} 
 OPTIONAL {
   ?s dct:isVersionOf ?w.
-}
-OPTIONAL {
-  ?w dct:hasVersion ?m .   
+  OPTIONAL {
+    ?w dct:hasVersion ?m .   
+  }
 }
 }    
 END
