@@ -8,6 +8,7 @@ require 'rdf/rdfxml'
 require 'haml'
 require 'rack/conneg'
 require 'cgi'
+require 'yaml'
 
 use(Rack::Conneg) { |conneg|
   Rack::Mime::MIME_TYPES['.nt'] = 'text/plain'   
@@ -23,7 +24,9 @@ module RDF
 end
 
 configure do
-  set :store, Sasquatch::Store.new('openlibrary')
+  config = YAML.load_file('./config/config.yml')
+  set :store, Sasquatch::Store.new(config['store_name'])
+  set :application_path, config['application_path']
 end
 
 before do  
@@ -104,7 +107,7 @@ helpers do
   end
   
   def base_url
-    @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}"
+    @base_url ||= "#{request.env['rack.url_scheme']}://#{request.env['HTTP_HOST']}#{options.application_path}"
   end
   
   def build_id_query(ids, predicate)
